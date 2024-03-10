@@ -4,6 +4,12 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
+)
+
+const (
+	OK        = "HTTP/1.1 200 OK\r\n\r\n"
+	NOT_FOUND = "HTTP/1.1 404 Not Found\r\n\r\n"
 )
 
 func main() {
@@ -30,5 +36,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	connection.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	header := strings.Split(string(data), "\r\n")[0]
+	path := strings.Split(header, " ")[1]
+	if path == "/" {
+		connection.Write([]byte(OK))
+	} else {
+		connection.Write([]byte(NOT_FOUND))
+	}
 }
