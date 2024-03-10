@@ -17,9 +17,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err = l.Accept()
+	connection, err := l.Accept()
+
 	if err != nil {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
+	data := make([]byte, 1024)
+	_, err = connection.Read(data)
+	if err != nil {
+		fmt.Println("Error reading data from connection: ", err.Error())
+		os.Exit(1)
+	}
+
+	connection.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 }
