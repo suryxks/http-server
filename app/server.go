@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os"
@@ -71,14 +72,24 @@ func handleConnection(connection net.Conn, directory string) {
 
 	} else if strings.Contains(path, "/files") {
 		// var response = []byte{}
+
 		_, filePath, _ := strings.Cut(path, "/files")
-		content, err := os.ReadFile(directory + filePath)
-		if err != nil {
-			connection.Write([]byte("HTTP/1.1 404 Not Found\r\nContent-Length: 15\r\nContent-Type: text/plain\r\n\r\nFile Not Found\r\n"))
+		if strings.Contains(headers[0], "POST") {
+			body := headers[len(headers)-1]
+			file, _ := os.Create(directory + "/" + filePath)
+			file.Write(bytes.Trim([]byte(body), "\x00"))
+			// os.WriteFile(directory+filePath, []byte(body))
+			connection.Write([]byte("HTTP/1.1 201 Created\r\nContent-Length:0\r\n\r\n"))
 
 		} else {
+			content, err := os.ReadFile(directory + filePath)
+			if err != nil {
+				connection.Write([]byte("HTTP/1.1 404 Not Found\r\nContent-Length: 15\r\nContent-Type: text/plain\r\n\r\nFile Not Found\r\n"))
 
-			connection.Write([]byte("HTTP/1.1 200 OK\r\nContent-Length:" + fmt.Sprint(len(string(content))) + "\r\nContent-Type: application/octet-stream\r\n\r\n" + string(content) + "\r\n"))
+			} else {
+
+				connection.Write([]byte("HTTP/1.1 200 OK\r\nContent-Length:" + fmt.Sprint(len(string(content))) + "\r\nContent-Type: application/octet-stream\r\n\r\n" + string(content) + "\r\n"))
+			}
 		}
 
 	} else {
