@@ -26,15 +26,23 @@ func main() {
 		fmt.Println("Failed to bind to port 4221")
 		os.Exit(1)
 	}
+	for {
+		connection, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+			break
+		}
+		defer connection.Close()
 
-	connection, err := l.Accept()
-
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+		go handleConnection((connection))
 	}
+
+}
+func handleConnection(connection net.Conn) {
+	defer connection.Close()
 	data := make([]byte, 1024)
-	_, err = connection.Read(data)
+	_, err := connection.Read(data)
 	if err != nil {
 		fmt.Println("Error reading data from connection: ", err.Error())
 		os.Exit(1)
