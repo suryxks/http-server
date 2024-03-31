@@ -40,13 +40,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	header := strings.Split(string(data), "\r\n")[0]
-	path := strings.Split(header, " ")[1]
+	headers := strings.Split(string(data), "\r\n")
+	path := strings.Split(headers[0], " ")[1]
 	if strings.Contains(path, "/echo") {
 		_, content, _ := strings.Cut(path, "/echo/")
 		connection.Write([]byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(content)) + "\r\n\r\n" + content))
 	} else if path == "/" {
 		connection.Write([]byte(OK))
+	} else if path == "/user-agent" {
+
+		for _, value := range headers {
+			if strings.Contains(value, USER_AGENT_HEADER) {
+				_, useragent, _ := strings.Cut(value, USER_AGENT_HEADER)
+				connection.Write([]byte("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " + strconv.Itoa(len(useragent)) + "\r\n\r\n" + useragent))
+
+			}
+		}
 	} else {
 		connection.Write([]byte(NOT_FOUND))
 	}
