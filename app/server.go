@@ -20,7 +20,11 @@ func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
 
-	//
+	args := os.Args
+	directory := "./"
+	if len(args) > 2 {
+		directory = args[2]
+	}
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
@@ -35,11 +39,11 @@ func main() {
 		}
 		defer connection.Close()
 
-		go handleConnection((connection))
+		go handleConnection(connection, directory)
 	}
 
 }
-func handleConnection(connection net.Conn) {
+func handleConnection(connection net.Conn, directory string) {
 	defer connection.Close()
 	data := make([]byte, 1024)
 	_, err := connection.Read(data)
@@ -64,6 +68,19 @@ func handleConnection(connection net.Conn) {
 
 			}
 		}
+
+	} else if strings.Contains(path, "/files") {
+		// var response = []byte{}
+		_, filePath, _ := strings.Cut(path, "/files")
+		content, err := os.ReadFile(directory + filePath)
+		if err != nil {
+			connection.Write([]byte("HTTP/1.1 404 Not Found\r\nContent-Length: 15\r\nContent-Type: text/plain\r\n\r\nFile Not Found\r\n"))
+
+		} else {
+
+			connection.Write([]byte("HTTP/1.1 200 OK\r\nContent-Length:" + fmt.Sprint(len(string(content))) + "\r\nContent-Type: application/octet-stream\r\n\r\n" + string(content) + "\r\n"))
+		}
+
 	} else {
 		connection.Write([]byte(NOT_FOUND))
 	}
